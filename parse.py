@@ -1,4 +1,5 @@
 from elasticsearch import Elasticsearch
+import os
 
 with open("FAQ.txt", "r") as f:
     data = f.readlines()
@@ -6,7 +7,8 @@ with open("FAQ.txt", "r") as f:
 current_index = 0
 idx = 1
 parsed = []
-es = Elasticsearch()
+ES_HOST = os.getenv('ES_HOST', default='localhost')
+es = Elasticsearch([ES_HOST])
 while current_index < len(data):
     prefix = str(idx) + ". "
     question = data[current_index][len(prefix):]

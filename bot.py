@@ -1,11 +1,12 @@
 import telepot
 import time
 from elasticsearch import Elasticsearch
+import os
 
-es = Elasticsearch()
-
-
-bot = telepot.Bot('204599736:AAGGV6WCHH21mRiYD_MxncwyBR7mIM9T96M')
+TELEGRAM_API_KEY = os.getenv('TELEGRAM_API_KEY')
+ES_HOST = os.getenv('ES_HOST', default='localhost')
+es = Elasticsearch([ES_HOST])
+bot = telepot.Bot(TELEGRAM_API_KEY)
 
 
 def handle(msg):
