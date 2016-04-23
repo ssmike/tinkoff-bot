@@ -2,7 +2,6 @@ import telepot
 import time
 from elasticsearch import Elasticsearch
 import os
-import time
 
 time.sleep(1)
 
