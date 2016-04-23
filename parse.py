@@ -33,3 +33,5 @@ while current_index < len(data):
 
     current_index += i+1
     idx += len(question)
+    if idx % 100 == 0:
+        print(idx)
