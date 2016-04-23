@@ -1,7 +1,9 @@
 from elasticsearch import Elasticsearch
 import os
+import sys
 
-with open("FAQ.txt", "r") as f:
+filename = sys.argv[1]
+with open(filename, "r") as f:
     data = f.readlines()
 
 current_index = 0
@@ -31,3 +33,5 @@ while current_index < len(data):
 
     current_index += i+1
     idx += len(question)
+    if idx % 100 == 0:
+        print(idx)
