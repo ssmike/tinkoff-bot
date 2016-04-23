@@ -15,7 +15,7 @@ def handle(msg):
     else:
         bot.sendMessage(msg['chat']['id'],
                         'Извините, я могу отвечать только на текстовые сообщения.')
-    res = es.search(body={"query": {"query_string": {"query": q}}})
+    res = es.search(body={"query": {"query_string": {"query": q, "fields": ["question"] }}})
     # print(res)
     if (len(res['hits']['hits']) == 0 or res['hits']['hits'][0]['_score'] < 0.3):
         bot.sendMessage(msg['chat']['id'],
