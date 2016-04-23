@@ -10,8 +10,7 @@ parsed = []
 ES_HOST = os.getenv('ES_HOST', default='localhost')
 es = Elasticsearch([ES_HOST])
 while current_index < len(data):
-    prefix = str(idx) + ". "
-    question = data[current_index][len(prefix):]
+    question = data[current_index]
     i = 0
     while (current_index + i < len(data) and data[current_index + i] != '\n'):
         i += 1
