@@ -14,7 +14,7 @@ def handle(msg):
     res = es.search(body={"query": {"query_string": {"query": q}}})
     # print(res)
     if (len(res['hits']['hits']) == 0 or res['hits']['hits'][0]['_score'] < 0.3):
-        bot.sendMessage(msg['chat']['id'], 'я хз')
+        bot.sendMessage(msg['chat']['id'], 'В данный момент я не могу ответить на ваш вопрос. Попробуйте позднее.')
     else:
         ques = res['hits']['hits'][0]['_source']['question']
         ans = res['hits']['hits'][0]['_source']['answer']
