@@ -1,1 +1,5 @@
+# Python related
 *.py[cod]
+
+# OS X related
+.DS_Store
