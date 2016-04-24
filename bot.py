@@ -4,6 +4,8 @@ from elasticsearch import Elasticsearch
 import os
 import re
 from flask import Flask, request
+import sys
+from importance import *
 
 hello_words = ['привет', 'приветики', 'здарова', 'приветствую', 'здравствуйте', 'приффки',
                'хай', 'хей', 'добрый', 'доброе', 'доброго']
@@ -14,6 +16,9 @@ hello_w = 'Здравствуйте. '
 bye_w = ' Если ко мне вопросов больше нет, всего доброго, до свидания.'
 
 app = Flask(__name__)
+vects, vec_len = {}, 100
+with open(sys.argv[1]) as f:
+    vects, vec_len = read_vectors(f.readlines())
 
 TELEGRAM_API_KEY = os.getenv('TELEGRAM_API_KEY')
 bot = telepot.Bot(TELEGRAM_API_KEY)
@@ -78,8 +83,7 @@ def answer_message(chat_id, text, is_in_telegram_chat=True):
         if b in vq:
             bye = True
 
-    res = es.search(body={"query": {"query_string": {"query": text,
-                                                     "fields": ["question^3", "answer"]}}})
+    res = es.search(body={"query": {"query_string": {"query": trim(text, vects, vec_len), "fields": ["question^3", "answer"]}}})
 
     if (len(res['hits']['hits']) == 0 or res['hits']['hits'][0]['_score'] < 0.1):
         if is_in_telegram_chat:

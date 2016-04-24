@@ -60,6 +60,13 @@ def parse_file(filename):
     return chats, sentences
 
 
+def score(sentence, words):
+    sentence_score = 0
+    for word in sentence:
+        sentence_score += words[word]
+    return sentence_score
+
+
 def best_dialogs(filename, max_dialog_len=12):
     chats, sentences = parse_file(filename)
     words = count_word_freqs(sentences)
@@ -80,9 +87,7 @@ def best_dialogs(filename, max_dialog_len=12):
         index = 0
         for k in range(len(current_chat)):
             person, sentence = current_chat[k]
-            sentence_score = 0
-            for word in sentence:
-                sentence_score += words[word]
+            sentence_score = score(sentence, words)
             if person != "Клиент" and k == len(current_chat) - 1:
                 sentence_score /= 2
             if person != "Клиент" and sentence_score < min_employee_score:
@@ -94,7 +99,7 @@ def best_dialogs(filename, max_dialog_len=12):
         for ind in range(best_index - 4, best_index + 4):
             if ind in range(len(current_chat)):
                 person, sentence = current_chat[ind]
-                if person != "Клиент":
+                if person != "Клиент" and score(sentence, words) < -20:
                     # print(sentence)
                     # if isinstance(sentence, list):
                     #    sentence = " ".join(sentence)
