@@ -78,10 +78,6 @@ def handle(msg):
             bye = True
 
     res = es.search(body={"query": {"query_string": {"query": q, "fields": ["question^3", "answer"]}}})
-    if hello:
-        res = hello_w + res
-    if bye:
-        res += bye_w
     # print(res)
 
     if (len(res['hits']['hits']) == 0 or res['hits']['hits'][0]['_score'] < 0.1):
@@ -91,6 +87,12 @@ def handle(msg):
     else:
         ques = res['hits']['hits'][0]['_source']['question']
         ans = res['hits']['hits'][0]['_source']['answer']
+        
+        if hello:
+            ans = hello_w + ans
+        if bye:
+            ans += bye_w
+
         score = res['hits']['hits'][0]['_score']
         format_string = "Relevancy:{rel}\nВопрос: {question}\nОтвет: {answer}"
         formatted = format_string.format(rel=score, question=ques, answer=ans)
