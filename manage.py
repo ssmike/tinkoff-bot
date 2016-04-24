@@ -17,7 +17,7 @@ if (command == "create"):
     os.system("curl -XPUT http://$ES_HOST:9200/" + index)
     os.system("""curl -XPOST http://$ES_HOST:9200/""" +
               index + """/""" + index +
-              """/_mapping -d'{"faq":{"_all":{"analyzer":"russian_morphology"}}}'""")
+              """/_mapping -d\'{\"faq\":{\"_all\":{\"analyzer\":\"russian_morphology\"}}}\'""")
 if (command == "add"):
     filename = sys.argv[3]
     with open(filename, "r") as f:
