@@ -2,6 +2,7 @@ import telepot
 import time
 from elasticsearch import Elasticsearch
 import os
+import re
 
 
 TELEGRAM_API_KEY = os.getenv('TELEGRAM_API_KEY')
@@ -54,6 +55,8 @@ def handle(msg):
         vq = re.split("[\'\"\:\-\.!?\s=\(\)]+", q)
         q = " ".join([x.lower() for x in vq])
     else:
+        bot.sendSticker(msg['chat']['id'],
+                        'BQADAgADKwAD4mVWBHQ_r1atEEueAg')
         bot.sendMessage(msg['chat']['id'], 'Извините, я могу отвечать только на текстовые сообщения.')
         return
     hello = False
