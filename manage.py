@@ -2,6 +2,7 @@ from elasticsearch import Elasticsearch
 import os
 import sys
 import time
+import re
 
 ES_HOST = os.getenv('ES_HOST', default='localhost')
 es = Elasticsearch([ES_HOST])
@@ -52,6 +53,7 @@ elif (command == "add"):
         answer = "".join(data[current_index + 1:current_index + i])
 
         for n, q in enumerate(question):
+            q = " ".join(re.split(r"[\'\"\:\-\.!?\s=\(\)]+", q))
             es.index(index, index, {"question": q, "answer": answer}, idx+n)
 
         current_index += i+1
