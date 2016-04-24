@@ -48,6 +48,13 @@ def pay_phone(msg):
 
 
 def handle(msg):
+    hello_words = ['привет', 'приветики', 'здарова', 'приветствую', 'здравствуйте', 'приффки', 'хай', 'хей',
+                    'добрый', 'вечер', 'доброе', 'утро', 'доброго']
+    bye_words = ['спасибо', 'ладно', 'ок', 'доброго', 'пока', 'свидания', 'встреч', 'спокойной',
+                    'наилучшего', 'хорошо', 'отлично', 'спс']
+    hello_w = 'Здравствуйте. '
+    bye_w = ' Если ко мне вопросов больше нет, всего доброго, до свидания.'
+
     print(msg)
     if 'text' in msg:
         q = msg['text']
@@ -59,10 +66,19 @@ def handle(msg):
     hello = False
     bye   = False
 
+    for h in hello_words:
+        if h in vq:
+            hello = True
 
-
+    for b in bye_words:
+        if b in vq:
+            bye = True
 
     res = es.search(body={"query": {"query_string": {"query": q, "fields": ["question^3", "answer"]}}})
+    if hello:
+        res = hello_w + res
+    if bye:
+        res += bye_w
     # print(res)
 
     if (len(res['hits']['hits']) == 0 or res['hits']['hits'][0]['_score'] < 0.1):
