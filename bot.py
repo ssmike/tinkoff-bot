@@ -24,6 +24,7 @@ def action_provider(name):
     def decorator(func):
         action_providers[func.__name__] = func
         return func
+    return decorator
 
 phone_numbers = dict()
 
