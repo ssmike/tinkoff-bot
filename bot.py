@@ -56,12 +56,16 @@ def pay_phone(msg):
                         amount=msg['text'], phone_number=phone_numbers[chat_id])
 
 
+def answer_message():
+    pass
+
+
 def handle(msg):
-    hello_words = ['привет', 'ку', 'кукусики', 'чмоки', 'приветики', 'здарова', 'приветствую', 'здравствуйте', 'приффки', 'хай', 'хей',
-                    'добрый', 'доброе', 'доброго']
-    bye_words = ['спасибо', 'ладно', 'ок', 'доброго', 'свидания', 'встреч', 'спокойной',
-                    'наилучшего', 'спс']
-    hello_w = 'Здравствуйте.* '
+    hello_words = ['привет', 'приветики', 'здарова', 'приветствую', 'здравствуйте', 'приффки',
+                   'хай', 'хей', 'добрый', 'доброе', 'доброго']
+    bye_words = ['спасибо', 'ладно', 'ок', 'доброго', 'пока', 'свидания', 'встреч', 'спокойной',
+                 'наилучшего', 'хорошо', 'отлично', 'спс']
+    hello_w = 'Здравствуйте. '
     bye_w = ' Если ко мне вопросов больше нет, всего доброго, до свидания.'
 
     print(msg)
@@ -72,10 +76,11 @@ def handle(msg):
     else:
         bot.sendSticker(msg['chat']['id'],
                         'BQADAgADKwAD4mVWBHQ_r1atEEueAg')
-        bot.sendMessage(msg['chat']['id'], 'Извините, я могу отвечать только на текстовые сообщения.')
+        bot.sendMessage(msg['chat']['id'],
+                        'Извините, я могу отвечать только на текстовые сообщения.')
         return
     hello = False
-    bye   = False
+    bye = False
 
     for h in hello_words:
         if h in vq:
@@ -85,13 +90,14 @@ def handle(msg):
         if b in vq:
             bye = True
 
-    res = es.search(body={"query": {"query_string": {"query": q, "fields": ["question^3", "answer"]}}})
-    # print(res)
+    res = es.search(body={"query": {"query_string": {"query": q,
+                                                     "fields": ["question^3", "answer"]}}})
 
     if (len(res['hits']['hits']) == 0 or res['hits']['hits'][0]['_score'] < 0.1):
         bot.sendSticker(msg['chat']['id'],
                         'BQADAgADKwAD4mVWBHQ_r1atEEueAg')
-        bot.sendMessage(msg['chat']['id'], 'В данный момент я не могу ответить на ваш вопрос. Попробуйте позже.')
+        bot.sendMessage(msg['chat']['id'],
+                        'В данный момент я не могу ответить на ваш вопрос. Попробуйте позже.')
     else:
         ques = res['hits']['hits'][0]['_source']['question']
         ans = res['hits']['hits'][0]['_source']['answer']
@@ -109,17 +115,20 @@ def handle(msg):
 print(bot.getMe())
 bot.message_loop(handle)
 
-@app.route('/', methods = ['POST'])
+
+@app.route('/', methods=['POST'])
 def message():
     q = request.data
     vq = re.split("[\'\"\:\-\.!?\s=\(\)]+", q)
     q = " ".join([x.lower() for x in vq])
-    res = es.search(body={"query": {"query_string": {"query": q, "fields": ["question^3", "answer"]}}})
+    res = es.search(body={"query": {"query_string": {"query": q,
+                                                     "fields": ["question^3", "answer"]}}})
     format_string = "Relevancy:{rel}\nВопрос: {question}\nОтвет: {answer}"
     ques = res['hits']['hits'][0]['_source']['question']
     ans = res['hits']['hits'][0]['_source']['answer']
+    score = res['hits']['hits'][0]['_score']
     formatted = format_string.format(rel=score, question=ques, answer=ans)
-    return res
+    return formatted
 
 print('Listening ...')
 app.run(host='0.0.0.0', port=8000)
