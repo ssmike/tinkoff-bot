@@ -117,8 +117,8 @@ bot.message_loop(handle)
 @app.route('/', methods=['POST'])
 def handleHTTPRequest():
     try:
-        print(request.get_data().decode("utf-8"))
-        return answer_message(0, request.get_data().decode("utf-8"))
+        dat = request.get_data().decode("utf-8")
+        return answer_message(0, dat)
     except Exception as e:
         print(e)
 
