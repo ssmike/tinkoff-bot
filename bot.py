@@ -7,6 +7,14 @@ from flask import Flask, request
 import sys
 from importance import *
 
+hello_words = ['привет', 'приветики', 'здарова', 'приветствую', 'здравствуйте', 'приффки',
+               'хай', 'хей', 'добрый', 'доброе', 'доброго']
+bye_words = ['спасибо', 'ладно', 'ок', 'доброго', 'пока', 'свидания', 'встреч', 'спокойной',
+             'наилучшего', 'хорошо', 'отлично', 'спс']
+
+hello_w = 'Здравствуйте. '
+bye_w = ' Если ко мне вопросов больше нет, всего доброго, до свидания.'
+
 app = Flask(__name__)
 vects, vec_len = {}, 100
 with open(sys.argv[1]) as f:
@@ -61,26 +69,11 @@ def pay_phone(msg):
                         amount=msg['text'], phone_number=phone_numbers[chat_id])
 
 
-def handle(msg):
-    hello_words = ['привет', 'приветики', 'здарова', 'приветствую', 'здравствуйте', 'приффки', 'хай', 'хей',
-                    'добрый', 'доброе', 'доброго']
-    bye_words = ['спасибо', 'ладно', 'ок', 'доброго', 'пока', 'свидания', 'встреч', 'спокойной',
-                    'наилучшего', 'хорошо', 'отлично', 'спс']
-    hello_w = 'Здравствуйте. '
-    bye_w = ' Если ко мне вопросов больше нет, всего доброго, до свидания.'
-
-    print(msg)
-    if 'text' in msg:
-        q = msg['text']
-        vq = re.split("[\'\"\:\-\.!?\s=\(\)]+", q)
-        q = " ".join([x.lower() for x in vq])
-    else:
-        bot.sendSticker(msg['chat']['id'],
-                        'BQADAgADKwAD4mVWBHQ_r1atEEueAg')
-        bot.sendMessage(msg['chat']['id'], 'Извините, я могу отвечать только на текстовые сообщения.')
-        return
+def answer_message(chat_id, text, is_in_telegram_chat=True):
+    vq = re.split("[\'\"\:\-\.!?\s=\(\)]+", text)
+    text = " ".join([x.lower() for x in vq])
     hello = False
-    bye   = False
+    bye = False
 
     for h in hello_words:
         if h in vq:
@@ -90,13 +83,13 @@ def handle(msg):
         if b in vq:
             bye = True
 
-    res = es.search(body={"query": {"query_string": {"query": trim(q, vects, vec_len), "fields": ["question^3", "answer"]}}})
-    # print(res)
+    res = es.search(body={"query": {"query_string": {"query": trim(text, vects, vec_len), "fields": ["question^3", "answer"]}}})
 
     if (len(res['hits']['hits']) == 0 or res['hits']['hits'][0]['_score'] < 0.1):
-        bot.sendSticker(msg['chat']['id'],
-                        'BQADAgADKwAD4mVWBHQ_r1atEEueAg')
-        bot.sendMessage(msg['chat']['id'], 'В данный момент я не могу ответить на ваш вопрос. Попробуйте позже.')
+        if is_in_telegram_chat:
+            bot.sendSticker(chat_id,
+                            'BQADAgADKwAD4mVWBHQ_r1atEEueAg')
+        return 'В данный момент я не могу ответить на ваш вопрос. Попробуйте позже.'
     else:
         ques = res['hits']['hits'][0]['_source']['question']
         ans = res['hits']['hits'][0]['_source']['answer']
@@ -109,22 +102,28 @@ def handle(msg):
         score = res['hits']['hits'][0]['_score']
         format_string = "Relevancy:{rel}\nВопрос: {question}\nОтвет: {answer}"
         formatted = format_string.format(rel=score, question=ques, answer=ans)
-        bot.sendMessage(msg['chat']['id'], formatted)
+        return formatted
+
+
+def handle(msg):
+    if 'text' not in msg:
+        bot.sendSticker(msg['chat']['id'],
+                        'BQADAgADKwAD4mVWBHQ_r1atEEueAg')
+        bot.sendMessage(msg['chat']['id'],
+                        'Извините, я могу отвечать только на текстовые сообщения.')
+        return
+    chat_id = msg['chat']['id']
+    text = msg['text']
+    ans = answer_message(chat_id, text)
+    bot.sendMessage(chat_id, ans)
 
 print(bot.getMe())
 bot.message_loop(handle)
 
-@app.route('/', methods = ['POST'])
-def message():
-    q = request.data
-    vq = re.split("[\'\"\:\-\.!?\s=\(\)]+", q)
-    q = " ".join([x.lower() for x in vq])
-    res = es.search(body={"query": {"query_string": {"query": q, "fields": ["question^3", "answer"]}}})
-    format_string = "Relevancy:{rel}\nВопрос: {question}\nОтвет: {answer}"
-    ques = res['hits']['hits'][0]['_source']['question']
-    ans = res['hits']['hits'][0]['_source']['answer']
-    formatted = format_string.format(rel=score, question=ques, answer=ans)
-    return res
+
+@app.route('/', methods=['POST'])
+def handleHTTPRequest():
+    return answer_message(0, request.data, is_in_telegram_chat=False)
 
 print('Listening ...')
 app.run(host='0.0.0.0', port=8000)
