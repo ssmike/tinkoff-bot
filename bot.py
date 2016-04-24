@@ -10,11 +10,17 @@ bot = telepot.Bot(TELEGRAM_API_KEY)
 
 ES_HOST = os.getenv('ES_HOST', default='localhost')
 es = Elasticsearch([ES_HOST])
-while not es.ping():
-    print("Waiting for elasticsearch to launch...")
+good = False
+while not good:
+    good = False
     time.sleep(1)
-
-time.sleep(10)
+    try:
+        while not es.ping():
+            print("Waiting for elasticsearch to launch...")
+            time.sleep(1)
+        good = True
+    except:
+        good = False
 
 action_providers = dict()
 states = dict()
