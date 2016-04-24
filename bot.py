@@ -3,12 +3,18 @@ import time
 from elasticsearch import Elasticsearch
 import os
 
-time.sleep(1)
 
 TELEGRAM_API_KEY = os.getenv('TELEGRAM_API_KEY')
+bot = telepot.Bot(TELEGRAM_API_KEY)
+
 ES_HOST = os.getenv('ES_HOST', default='localhost')
 es = Elasticsearch([ES_HOST])
-bot = telepot.Bot(TELEGRAM_API_KEY)
+while not es.ping():
+    print("Waiting for elasticsearch to launch...")
+    time.sleep(1)
+
+time.sleep(10)
+
 action_providers = dict()
 states = dict()
 chat_handlers = dict()
@@ -18,6 +24,7 @@ def action_provider(name):
     def decorator(func):
         action_providers[func.__name__] = func
         return func
+    return decorator
 
 phone_numbers = dict()
 
