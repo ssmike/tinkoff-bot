@@ -1,3 +1,4 @@
 telepot
 elasticsearch
 flask
+numpy
