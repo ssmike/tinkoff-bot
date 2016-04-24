@@ -34,20 +34,29 @@ while not good:
         good = False
 
 
-def answer_message(chat_id, text, is_in_telegram_chat=True):
-    vq = re.split("[\'\"\:\-\.!?\s=\(\)]+", text)
-    text = " ".join([x.lower() for x in vq])
-    if chat_id in action_providers.current_chat_handlers:
+def answer_message(chat_id, text, telegram_message=None):
+    print(action_providers.current_chat_handlers)
+    print(chat_id)
+    if (chat_id in action_providers.current_chat_handlers and
+            action_providers.current_chat_handlers[chat_id] is not None):
         provider_name = action_providers.current_chat_handlers[chat_id]
         provider_func = action_providers.providers_list[provider_name]
-        provider_func(chat_id, text)
-        return
+        if telegram_message:
+            message = provider_func(chat_id, text, telegram_message, bot)
+        else:
+            message = provider_func(chat_id, text)
+        return message
     if text in action_providers.providers_list:
         provider_name = text
         provider_func = action_providers.providers_list[provider_name]
-        provider_func(chat_id, text)
-        return
+        if telegram_message:
+            message = provider_func(chat_id, text, telegram_message, bot)
+        else:
+            message = provider_func(chat_id, text)
+        return message
 
+    vq = re.split("[\'\"\:\-\.!?\s=\(\)]+", text)
+    text = " ".join([x.lower() for x in vq])
     hello = False
     bye = False
 
@@ -63,7 +72,7 @@ def answer_message(chat_id, text, is_in_telegram_chat=True):
                                                      "fields": ["question^3", "answer"]}}})
 
     if (len(res['hits']['hits']) == 0 or res['hits']['hits'][0]['_score'] < 0.1):
-        if is_in_telegram_chat:
+        if telegram_message is not None:
             bot.sendSticker(chat_id,
                             'BQADAgADKwAD4mVWBHQ_r1atEEueAg')
         return 'В данный момент я не могу ответить на ваш вопрос. Попробуйте позже.'
@@ -83,15 +92,21 @@ def answer_message(chat_id, text, is_in_telegram_chat=True):
 
 
 def handle(msg):
-    if 'text' not in msg:
+    chat_id = msg['chat']['id']
+    currently_handled_by_provider = (chat_id in action_providers.current_chat_handlers and
+                                     action_providers.current_chat_handlers[chat_id] is not None)
+    if 'text' not in msg and not currently_handled_by_provider:
         bot.sendSticker(msg['chat']['id'],
                         'BQADAgADKwAD4mVWBHQ_r1atEEueAg')
         bot.sendMessage(msg['chat']['id'],
                         'Извините, я могу отвечать только на текстовые сообщения.')
         return
-    chat_id = msg['chat']['id']
-    text = msg['text']
-    ans = answer_message(chat_id, text)
+
+    if ('text' in msg):
+        text = msg['text']
+    else:
+        text = None
+    ans = answer_message(chat_id, text, msg)
     bot.sendMessage(chat_id, ans)
 
 print(bot.getMe())
@@ -100,7 +115,7 @@ bot.message_loop(handle)
 
 @app.route('/', methods=['POST'])
 def handleHTTPRequest():
-    return answer_message(0, request.data, is_in_telegram_chat=False)
+    return answer_message(0, request.data)
 
 print('Listening ...')
 app.run(host='0.0.0.0', port=8000)
