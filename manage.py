@@ -20,11 +20,12 @@ while not good:
         good = False
 
 command = sys.argv[1]
+if (command == "list"):
+    os.system("""curl http://$ES_HOST:9200/_cat/indices?v""")
+    return
 index = sys.argv[2]
 if (command == "delete"):
     os.system("curl -XDELETE http://$ES_HOST:9200/" + index)
-elif (command == "list"):
-    os.system("""curl http://$ES_HOST:9200/_cat/indices?v""")
 elif (command == "create"):
     os.system("curl -XPUT http://$ES_HOST:9200/" + index)
     os.system("""curl -XPOST http://$ES_HOST:9200/""" +
