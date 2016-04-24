@@ -12,11 +12,17 @@ bot = telepot.Bot(TELEGRAM_API_KEY)
 
 ES_HOST = os.getenv('ES_HOST', default='localhost')
 es = Elasticsearch([ES_HOST])
-while not es.ping():
-    print("Waiting for elasticsearch to launch...")
+good = False
+while not good:
+    good = False
     time.sleep(1)
-
-time.sleep(10)
+    try:
+        while not es.ping():
+            print("Waiting for elasticsearch to launch...")
+            time.sleep(1)
+        good = True
+    except:
+        good = False
 
 action_providers = dict()
 states = dict()
@@ -52,7 +58,7 @@ def pay_phone(msg):
 
 def handle(msg):
     hello_words = ['привет', 'приветики', 'здарова', 'приветствую', 'здравствуйте', 'приффки', 'хай', 'хей',
-                    'добрый', 'вечер', 'доброе', 'утро', 'доброго']
+                    'добрый', 'доброе', 'доброго']
     bye_words = ['спасибо', 'ладно', 'ок', 'доброго', 'пока', 'свидания', 'встреч', 'спокойной',
                     'наилучшего', 'хорошо', 'отлично', 'спс']
     hello_w = 'Здравствуйте. '
@@ -89,7 +95,7 @@ def handle(msg):
     else:
         ques = res['hits']['hits'][0]['_source']['question']
         ans = res['hits']['hits'][0]['_source']['answer']
-        
+
         if hello:
             ans = hello_w + ans
         if bye:
