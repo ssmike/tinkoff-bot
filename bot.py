@@ -12,16 +12,17 @@ bot = telepot.Bot(TELEGRAM_API_KEY)
 
 
 def handle(msg):
+    print(msg)
     if 'text' in msg:
         q = msg['text']
     else:
-        bot.sendMessage(msg['chat']['id'],
-                        'Извините, я могу отвечать только на текстовые сообщения.')
+        bot.sendMessage(msg['chat']['id'], 'Извините, я могу отвечать только на текстовые сообщения.')
     res = es.search(body={"query": {"query_string": {"query": q, "fields": ["question^3", "answer"] }}})
     # print(res)
     if (len(res['hits']['hits']) == 0 or res['hits']['hits'][0]['_score'] < 0.1):
-        bot.sendMessage(msg['chat']['id'],
-                        'В данный момент я не могу ответить на ваш вопрос. Попробуйте позднее.')
+        bot.sendSticker(msg['chat']['id'],
+                         'BQADAgADKwAD4mVWBHQ_r1atEEueAg')
+        bot.sendMessage(msg['chat']['id'], 'В данный момент я не могу ответить на ваш вопрос. Попробуйте позже.')
     else:
         ques = res['hits']['hits'][0]['_source']['question']
         ans = res['hits']['hits'][0]['_source']['answer']
