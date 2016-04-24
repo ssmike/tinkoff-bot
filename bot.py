@@ -72,7 +72,7 @@ def answer_message(chat_id, text, telegram_message=None):
 
     res = es.search(body={"query": {"query_string": {"query": text, "fields": ["question^3", "answer"]}}})
 
-    if (len(res['hits']['hits']) == 0 or res['hits']['hits'][0]['_score'] < 0.1):
+    if (len(res['hits']['hits']) == 0 or res['hits']['hits'][0]['_score'] < 1.1):
         if telegram_message is not None:
             bot.sendSticker(chat_id,
                             'BQADAgADKwAD4mVWBHQ_r1atEEueAg')
@@ -87,7 +87,7 @@ def answer_message(chat_id, text, telegram_message=None):
             ans += bye_w
 
         score = res['hits']['hits'][0]['_score']
-        format_string = "Relevancy:{rel}\nВопрос: {question}\nОтвет: {answer}"
+        format_string = "{answer}"
         formatted = format_string.format(rel=score, question=ques, answer=ans)
         return formatted
 
