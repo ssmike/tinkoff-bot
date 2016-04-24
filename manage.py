@@ -54,7 +54,7 @@ elif (command == "add"):
 
         for n, q in enumerate(question):
             q = " ".join(re.split(r"[\'\"\:\-\.!?\s=\(\)]+", q))
-            es.index(index, index, {"question": q, "answer": answer}, idx+n)
+            es.index(index, index, {"question": q.lower(), "answer": answer}, idx+n)
 
         current_index += i+1
         idx += len(question)
