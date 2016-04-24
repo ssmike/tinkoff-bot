@@ -36,25 +36,26 @@ while not good:
 
 
 def answer_message(chat_id, text, telegram_message=None):
-    print(action_providers.current_chat_handlers)
-    print(chat_id)
-    if (chat_id in action_providers.current_chat_handlers and
-            action_providers.current_chat_handlers[chat_id] is not None):
-        provider_name = action_providers.current_chat_handlers[chat_id]
-        provider_func = action_providers.providers_list[provider_name]
-        if telegram_message:
-            message = provider_func(chat_id, text, telegram_message, bot)
-        else:
-            message = provider_func(chat_id, text)
-        return message
-    if text in action_providers.providers_list:
-        provider_name = text
-        provider_func = action_providers.providers_list[provider_name]
-        if telegram_message:
-            message = provider_func(chat_id, text, telegram_message, bot)
-        else:
-            message = provider_func(chat_id, text)
-        return message
+    if (telegram_message):
+        print(action_providers.current_chat_handlers)
+        print(chat_id)
+        if (chat_id in action_providers.current_chat_handlers and
+                action_providers.current_chat_handlers[chat_id] is not None):
+            provider_name = action_providers.current_chat_handlers[chat_id]
+            provider_func = action_providers.providers_list[provider_name]
+            if telegram_message:
+                message = provider_func(chat_id, text, telegram_message, bot)
+            else:
+                message = provider_func(chat_id, text)
+            return message
+        if text in action_providers.providers_list:
+            provider_name = text
+            provider_func = action_providers.providers_list[provider_name]
+            if telegram_message:
+                message = provider_func(chat_id, text, telegram_message, bot)
+            else:
+                message = provider_func(chat_id, text)
+            return message
 
     vq = re.split("[\'\"\:\-\.!?\s=\(\)]+", text)
     text = " ".join([x.lower() for x in vq])
@@ -115,9 +116,11 @@ bot.message_loop(handle)
 
 @app.route('/', methods=['POST'])
 def handleHTTPRequest():
-    return answer_message(0, request.data)
-    print(request.get_data().decode("utf-8"))
-    return answer_message(0, request.get_data().decode("utf-8"), is_in_telegram_chat=False)
+    try:
+        print(request.get_data().decode("utf-8"))
+        return answer_message(0, request.get_data().decode("utf-8"))
+    except Exception as e:
+        print(e)
 
 print('Listening ...')
 app.run(host='0.0.0.0', port=8000)
