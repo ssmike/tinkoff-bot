@@ -3,18 +3,26 @@ import time
 from elasticsearch import Elasticsearch
 import os
 import re
+from flask import Flask, request
 
+app = Flask(__name__)
 
 TELEGRAM_API_KEY = os.getenv('TELEGRAM_API_KEY')
 bot = telepot.Bot(TELEGRAM_API_KEY)
 
 ES_HOST = os.getenv('ES_HOST', default='localhost')
 es = Elasticsearch([ES_HOST])
-while not es.ping():
-    print("Waiting for elasticsearch to launch...")
+good = False
+while not good:
+    good = False
     time.sleep(1)
-
-time.sleep(10)
+    try:
+        while not es.ping():
+            print("Waiting for elasticsearch to launch...")
+            time.sleep(1)
+        good = True
+    except:
+        good = False
 
 action_providers = dict()
 states = dict()
@@ -100,6 +108,18 @@ def handle(msg):
 
 print(bot.getMe())
 bot.message_loop(handle)
+
+@app.route('/', methods = ['POST'])
+def message():
+    q = request.data
+    vq = re.split("[\'\"\:\-\.!?\s=\(\)]+", q)
+    q = " ".join([x.lower() for x in vq])
+    res = es.search(body={"query": {"query_string": {"query": q, "fields": ["question^3", "answer"]}}})
+    format_string = "Relevancy:{rel}\nВопрос: {question}\nОтвет: {answer}"
+    ques = res['hits']['hits'][0]['_source']['question']
+    ans = res['hits']['hits'][0]['_source']['answer']
+    formatted = format_string.format(rel=score, question=ques, answer=ans)
+    return res
+
 print('Listening ...')
-while 1:
-    time.sleep(10)
+app.run(host='0.0.0.0', port=8000)
