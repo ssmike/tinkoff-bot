@@ -4,6 +4,7 @@ from elasticsearch import Elasticsearch
 import os
 import re
 from flask import Flask, request
+import action_providers
 
 hello_words = ['привет', 'приветики', 'здарова', 'приветствую', 'здравствуйте', 'приффки',
                'хай', 'хей', 'добрый', 'доброе', 'доброго']
@@ -14,6 +15,7 @@ hello_w = 'Здравствуйте. '
 bye_w = ' Если ко мне вопросов больше нет, всего доброго, до свидания.'
 
 app = Flask(__name__)
+
 
 TELEGRAM_API_KEY = os.getenv('TELEGRAM_API_KEY')
 bot = telepot.Bot(TELEGRAM_API_KEY)
@@ -32,39 +34,29 @@ while not good:
     except:
         good = False
 
-action_providers = dict()
-states = dict()
-chat_handlers = dict()
 
+def answer_message(chat_id, text, telegram_message=None):
+    if (telegram_message):
+        print(action_providers.current_chat_handlers)
+        print(chat_id)
+        if (chat_id in action_providers.current_chat_handlers and
+                action_providers.current_chat_handlers[chat_id] is not None):
+            provider_name = action_providers.current_chat_handlers[chat_id]
+            provider_func = action_providers.providers_list[provider_name]
+            if telegram_message:
+                message = provider_func(chat_id, text, telegram_message, bot)
+            else:
+                message = provider_func(chat_id, text)
+            return message
+        if text in action_providers.providers_list:
+            provider_name = text
+            provider_func = action_providers.providers_list[provider_name]
+            if telegram_message:
+                message = provider_func(chat_id, text, telegram_message, bot)
+            else:
+                message = provider_func(chat_id, text)
+            return message
 
-def action_provider(name):
-    def decorator(func):
-        action_providers[func.__name__] = func
-        return func
-    return decorator
-
-phone_numbers = dict()
-
-
-@action_provider("pay_phone")
-def pay_phone(msg):
-    chat_id = msg['chat']['id']
-    if (chat_id not in states):
-        chat_handlers[chat_id] = "pay_phone"
-        states[chat_id] = 0
-    if (states[chat_id] == 0):
-        bot.sendMessage(chat_id, "Введите номер телефона")
-        states[chat_id] = 1
-    if (states[chat_id] == 1):
-        phone_numbers[chat_id] = msg['text']
-        bot.sendMessage(chat_id, "Введите сумму")
-        states[chat_id] = 2
-    if (states[chat_id] == 2):
-        bot.sendMessage(chat_id, "Я отправил вам {amount} на телефон {phone_number}",
-                        amount=msg['text'], phone_number=phone_numbers[chat_id])
-
-
-def answer_message(chat_id, text, is_in_telegram_chat=True):
     vq = re.split("[\'\"\:\-\.!?\s=\(\)]+", text)
     text = " ".join([x.lower() for x in vq])
     hello = False
@@ -78,11 +70,10 @@ def answer_message(chat_id, text, is_in_telegram_chat=True):
         if b in vq:
             bye = True
 
-    res = es.search(body={"query": {"query_string": {"query": text,
-                                                     "fields": ["question^3", "answer"]}}})
+    res = es.search(body={"query": {"query_string": {"query": text, "fields": ["question^3", "answer"]}}})
 
     if (len(res['hits']['hits']) == 0 or res['hits']['hits'][0]['_score'] < 0.1):
-        if is_in_telegram_chat:
+        if telegram_message is not None:
             bot.sendSticker(chat_id,
                             'BQADAgADKwAD4mVWBHQ_r1atEEueAg')
         return 'В данный момент я не могу ответить на ваш вопрос. Попробуйте позже.'
@@ -102,15 +93,21 @@ def answer_message(chat_id, text, is_in_telegram_chat=True):
 
 
 def handle(msg):
-    if 'text' not in msg:
+    chat_id = msg['chat']['id']
+    currently_handled_by_provider = (chat_id in action_providers.current_chat_handlers and
+                                     action_providers.current_chat_handlers[chat_id] is not None)
+    if 'text' not in msg and not currently_handled_by_provider:
         bot.sendSticker(msg['chat']['id'],
                         'BQADAgADKwAD4mVWBHQ_r1atEEueAg')
         bot.sendMessage(msg['chat']['id'],
                         'Извините, я могу отвечать только на текстовые сообщения.')
         return
-    chat_id = msg['chat']['id']
-    text = msg['text']
-    ans = answer_message(chat_id, text)
+
+    if ('text' in msg):
+        text = msg['text']
+    else:
+        text = None
+    ans = answer_message(chat_id, text, msg)
     bot.sendMessage(chat_id, ans)
 
 print(bot.getMe())
@@ -119,7 +116,11 @@ bot.message_loop(handle)
 
 @app.route('/', methods=['POST'])
 def handleHTTPRequest():
-    return answer_message(0, request.data, is_in_telegram_chat=False)
+    try:
+        print(request.get_data().decode("utf-8"))
+        return answer_message(0, request.get_data().decode("utf-8"))
+    except Exception as e:
+        print(e)
 
 print('Listening ...')
 app.run(host='0.0.0.0', port=8000)
