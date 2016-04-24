@@ -64,6 +64,10 @@ def best_dialogs(filename, max_dialog_len=12):
     chats, sentences = parse_file(filename)
     words = count_word_freqs(sentences)
     dialogs = []
+    stop_words = ['привет', 'ку', 'кукусики', 'чмоки', 'приветики', 'здарова', 'приветствую',
+                  'здравствуйте', 'приффки', 'хай', 'хей', 'добрый', 'доброе', 'доброго', 'спасибо',
+                  'ладно', 'ок', 'доброго', 'свидания', 'встреч', 'спокойной', 'наилучшего', 'спс']
+    stop_words = set(stop_words)
     for i in range(len(chats)):
         current_chat = chats[i]
         if len(current_chat) > max_dialog_len:
@@ -86,6 +90,24 @@ def best_dialogs(filename, max_dialog_len=12):
                 min_employee_score = sentence_score
                 best_index = index
             index += 1
+        near_sentences = []
+        for ind in range(best_index - 4, best_index + 4):
+            if ind in range(len(current_chat)):
+                person, sentence = current_chat[ind]
+                if person != "Клиент":
+                    # print(sentence)
+                    # if isinstance(sentence, list):
+                    #    sentence = " ".join(sentence)
+                    # print(sentence)
+                    near_sentences.extend(sentence)
+        # print(near_sentences[:3])
+        # print(type(near_sentences))
+        new_near_sentences = []
+        for word in near_sentences:
+            if word.lower() not in stop_words:
+                new_near_sentences.append(word)
+        best_answer = new_near_sentences
+
         for j in range(best_index):
             person, sentence = current_chat[j]
             sentence_score = 0
