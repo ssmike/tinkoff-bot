@@ -22,7 +22,7 @@ while not good:
 command = sys.argv[1]
 if (command == "list"):
     os.system("""curl http://$ES_HOST:9200/_cat/indices?v""")
-    return
+    sys.exit(0)
 index = sys.argv[2]
 if (command == "delete"):
     os.system("curl -XDELETE http://$ES_HOST:9200/" + index)
