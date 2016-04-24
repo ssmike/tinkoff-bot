@@ -74,10 +74,13 @@ def best_dialogs(filename, max_dialog_len=12):
         min_employee_score = 0
         best_index = 0
         index = 0
-        for (person, sentence) in current_chat:
+        for k in range(len(current_chat)):
+            person, sentence = current_chat[k]
             sentence_score = 0
             for word in sentence:
                 sentence_score += words[word]
+            if person != "Клиент" and k == len(current_chat) - 1:
+                sentence_score /= 2
             if person != "Клиент" and sentence_score < min_employee_score:
                 best_answer = sentence
                 min_employee_score = sentence_score
