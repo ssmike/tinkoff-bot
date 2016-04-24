@@ -6,9 +6,14 @@ import os
 time.sleep(1)
 
 TELEGRAM_API_KEY = os.getenv('TELEGRAM_API_KEY')
+bot = telepot.Bot(TELEGRAM_API_KEY)
+
 ES_HOST = os.getenv('ES_HOST', default='localhost')
 es = Elasticsearch([ES_HOST])
-bot = telepot.Bot(TELEGRAM_API_KEY)
+while not es.ping():
+    print("Waiting for elasticsearch to launch...")
+    time.sleep(1)
+
 action_providers = dict()
 states = dict()
 chat_handlers = dict()
@@ -48,7 +53,7 @@ def handle(msg):
         bot.sendMessage(msg['chat']['id'], 'Извините, я могу отвечать только на текстовые сообщения.')
     res = es.search(body={"query": {"query_string": {"query": q, "fields": ["question^3", "answer"]}}})
     # print(res)
-    
+
     if (len(res['hits']['hits']) == 0 or res['hits']['hits'][0]['_score'] < 0.1):
         bot.sendSticker(msg['chat']['id'],
                         'BQADAgADKwAD4mVWBHQ_r1atEEueAg')
