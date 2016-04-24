@@ -82,7 +82,8 @@ def answer_message(chat_id, text, is_in_telegram_chat=True):
     for b in bye_words:
         if b in vq:
             bye = True
-
+    print(">>>>>>", trim(text, vects, vec_len))
+    print(">>>>>>", importance(text, vects, vec_len))
     res = es.search(body={"query": {"query_string": {"query": trim(text, vects, vec_len), "fields": ["question^3", "answer"]}}})
 
     if (len(res['hits']['hits']) == 0 or res['hits']['hits'][0]['_score'] < 0.1):
@@ -123,7 +124,8 @@ bot.message_loop(handle)
 
 @app.route('/', methods=['POST'])
 def handleHTTPRequest():
-    return answer_message(0, request.data, is_in_telegram_chat=False)
+    print(request.get_data().decode("utf-8"))
+    return answer_message(0, request.get_data().decode("utf-8") , is_in_telegram_chat=False)
 
 print('Listening ...')
 app.run(host='0.0.0.0', port=8000)
