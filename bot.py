@@ -4,6 +4,7 @@ from elasticsearch import Elasticsearch
 import os
 import re
 from flask import Flask, request
+import action_providers
 
 hello_words = ['привет', 'приветики', 'здарова', 'приветствую', 'здравствуйте', 'приффки',
                'хай', 'хей', 'добрый', 'доброе', 'доброго']
@@ -32,41 +33,21 @@ while not good:
     except:
         good = False
 
-action_providers = dict()
-states = dict()
-chat_handlers = dict()
-
-
-def action_provider(name):
-    def decorator(func):
-        action_providers[func.__name__] = func
-        return func
-    return decorator
-
-phone_numbers = dict()
-
-
-@action_provider("pay_phone")
-def pay_phone(msg):
-    chat_id = msg['chat']['id']
-    if (chat_id not in states):
-        chat_handlers[chat_id] = "pay_phone"
-        states[chat_id] = 0
-    if (states[chat_id] == 0):
-        bot.sendMessage(chat_id, "Введите номер телефона")
-        states[chat_id] = 1
-    if (states[chat_id] == 1):
-        phone_numbers[chat_id] = msg['text']
-        bot.sendMessage(chat_id, "Введите сумму")
-        states[chat_id] = 2
-    if (states[chat_id] == 2):
-        bot.sendMessage(chat_id, "Я отправил вам {amount} на телефон {phone_number}",
-                        amount=msg['text'], phone_number=phone_numbers[chat_id])
-
 
 def answer_message(chat_id, text, is_in_telegram_chat=True):
     vq = re.split("[\'\"\:\-\.!?\s=\(\)]+", text)
     text = " ".join([x.lower() for x in vq])
+    if chat_id in action_providers.current_chat_handlers:
+        provider_name = action_providers.current_chat_handlers[chat_id]
+        provider_func = action_providers.providers_list[provider_name]
+        provider_func(chat_id, text)
+        return
+    if text in action_providers.providers_list:
+        provider_name = text
+        provider_func = action_providers.providers_list[provider_name]
+        provider_func(chat_id, text)
+        return
+
     hello = False
     bye = False
 
