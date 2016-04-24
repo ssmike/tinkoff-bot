@@ -10,6 +10,8 @@ services:
     build:
         context: .
         dockerfile: ./Dockerfiles/bot/Dockerfile
+    ports:
+      - 8000:8000
     command: python bot.py vectors
     volumes:
       - .:/bot

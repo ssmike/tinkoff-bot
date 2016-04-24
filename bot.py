@@ -116,6 +116,8 @@ bot.message_loop(handle)
 @app.route('/', methods=['POST'])
 def handleHTTPRequest():
     return answer_message(0, request.data)
+    print(request.get_data().decode("utf-8"))
+    return answer_message(0, request.get_data().decode("utf-8"), is_in_telegram_chat=False)
 
 print('Listening ...')
 app.run(host='0.0.0.0', port=8000)
