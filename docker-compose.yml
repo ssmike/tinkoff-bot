@@ -10,7 +10,7 @@ services:
     build:
         context: .
         dockerfile: ./Dockerfiles/bot/Dockerfile
-    command: python bot.py
+    command: python bot.py vectors
     volumes:
       - .:/bot
     depends_on:
